@@ -22,7 +22,8 @@ class LazyMe
         void    execute(void);
         class FailException: public std::exception{
             public:
-                virtual const char* what() const throw();
+                virtual const char* what() const throw(){
+                	return "can not opne file";}
         };
 
     private:
@@ -160,6 +161,9 @@ void    LazyMe::execute(void)
 
 int main (void)
 {
-    LazyMe me;
-    me.execute();
+	try{
+		LazyMe me;
+		me.execute();}
+	catch (const LazyMe::FailException& e){
+		std::cerr << "Exception: " << e.what() << std::endl;}
 }
