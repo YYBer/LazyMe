@@ -3,6 +3,8 @@
 # include <string>
 # include <cstdlib>
 # include <exception>
+# include <unistd.h>
+
 
 #ifndef LAZYME_HPP
 #define LAZYME_HPP
@@ -20,10 +22,11 @@ class LazyMe
         std::string&    getUpperFileName(void);
         void    convertcustomization(void);
         void    execute(void);
+        void    getInput(char *className);
         class FailException: public std::exception{
             public:
                 virtual const char* what() const throw(){
-                	return "can not opne file";}
+                	return "can not open file";}
         };
 
     private:
@@ -31,6 +34,7 @@ class LazyMe
         std::string _upperFileName;
         std::string _cfileoutput;
         std::string _hfileoutput;
+        std::string _path;
 };
 #endif
 
@@ -136,13 +140,9 @@ void    LazyMe::convertcustomization(void)
     }
 }
 
-void    LazyMe::execute(void)
+void    LazyMe::execute()
 {
     setOutput();
-    std::cout<< "please type the name of class you want to create: " << std::endl;
-    std::string input = "";
-    std::getline(std::cin, input);
-    this->_fileName = input;
     setUpperFileName();
     convertcustomization();
     std::string tmp1 = getFileName() + ".cpp";
@@ -159,11 +159,52 @@ void    LazyMe::execute(void)
     ofsh.close();
 }
 
-int main (void)
+
+void LazyMe::getInput(char *className)
 {
+    // something like this could work for MAC
+    //
+    // try {
+    //     fs::path currentPath = fs::current_path();
+    //     std::cout << "Current working directory: " << currentPath << std::endl;
+    // } catch (const std::exception& e) {
+    //     std::cerr << "Error: " << e.what() << std::endl;
+    //     return (NULL);
+    // }
+    // return 0;
+    // std::string path = getPath() + "/";
+    // this->_fileName = this->_fileName.insert(0, path);
+    // std::cout << "file with pathname is " << this->_fileName << std::endl;
+
+    // This works for Linux
+    char path[500];
+    this->_fileName = className;
+
+    if (getcwd(path, sizeof(path)) != NULL) {
+        std::string pathString(path);
+        this->_path = pathString;
+        this->_path.append("/");
+        this->_path.append(this->_fileName);
+        // std::cout << "Current path: " << this->_path << std::endl;
+        // std::cout << "Current filename : " << this->_fileName << std::endl;
+    } else {
+        perror("getcwd() error");
+    }
+}
+
+int main (int argc, char **argv)
+{
+    if (argc != 2)
+    {
+        std::cout << "Correct usage is: <executable name> <className>" << std::endl;
+        return 1;
+    }
 	try{
 		LazyMe me;
-		me.execute();}
+        me.getInput(argv[1]);
+		me.execute();
+        std::cout << "Made the " << argv[1] << " class" << std::endl;
+        }
 	catch (const LazyMe::FailException& e){
 		std::cerr << "Exception: " << e.what() << std::endl;}
 }
